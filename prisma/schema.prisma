@@ -1,0 +1,324 @@
+// AcademiaLens Prisma Schema
+// Comprehensive schema for AcademiaLens application
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== Enums ====================
+
+enum SubscriptionStatus {
+  FREE
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+  CANCELLED
+  PAST_DUE
+}
+
+enum FileType {
+  PDF
+  DOCX
+  DOC
+  TXT
+  MD
+  HTML
+  PPTX
+  XLSX
+}
+
+enum ProjectRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+// ==================== User Management ====================
+
+model User {
+  id                String    @id @default(cuid())
+  name              String?
+  email             String    @unique
+  emailVerified     DateTime?
+  image             String?
+  password          String?   // Hashed password for email/password auth
+  role              String    @default("user")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Profile information
+  title             String?
+  institution       String?
+  department        String?
+  bio               String?
+  researchInterests String[]
+
+
+  // Subscription and billing
+  stripeCustomerId  String?   @unique
+  subscriptionId    String?
+  subscriptionStatus SubscriptionStatus? @default(FREE)
+  subscriptionPeriodEnd DateTime?
+
+
+  // Relations
+  accounts          Account[]
+  sessions          Session[]
+  verificationTokens VerificationToken[]
+  projects          Project[]
+  documents         Document[]
+  analyses          Analysis[]         @relation("UserAnalyses")
+  glossaries        Glossary[]
+  aiInteractions    AIInteraction[]
+  notifications     Notification[]
+  sharedProjects    ProjectMember[]
+  createdAnalyses   Analysis[]         @relation("AnalysisCreatedBy")
+}
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  user       User     @relation(fields: [identifier], references: [email], onDelete: Cascade)
+
+  @@unique([identifier, token])
+  @@index([identifier])
+}
+
+// ==================== Project Management ====================
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isArchived  Boolean   @default(false)
+
+
+  // Relations
+  userId      String    // Owner
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents   Document[]
+  analyses    Analysis[]
+  glossaries  Glossary[]
+  members     ProjectMember[]
+
+  @@index([userId])
+  @@index([isArchived])
+}
+
+model ProjectMember {
+  id        String       @id @default(cuid())
+  role      ProjectRole  @default(VIEWER)
+  joinedAt  DateTime     @default(now())
+
+
+  // Relations
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+// ==================== Document Management ====================
+model Document {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  fileUrl         String    // URL to stored file
+  fileType        FileType
+  fileSize        Int       // Size in bytes
+  pageCount       Int?      // For PDFs
+  extractedText   String?   @db.Text
+  metadata        Json?     // Extracted metadata (authors, publication date, etc.)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  isProcessed     Boolean   @default(false)
+  processingError String?
+
+  // Relations
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  chunks          DocumentChunk[]
+  analyses        Analysis[]
+  citations       Citation[]
+  entities        DocumentEntity[]
+  aiInteractions  AIInteraction[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([fileType])
+  @@index([isProcessed])
+}
+
+model DocumentChunk {
+  id          String    @id @default(cuid())
+  content     String    @db.Text
+  chunkIndex  Int
+  pageNumber  Int?
+  embedding   Bytes?    // Vector embedding for semantic search
+
+  // Relations
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+}
+
+// ==================== Analysis & AI ====================
+model Analysis {
+  id          String     @id @default(cuid())
+  type        String
+  result      Json
+  metadata    Json?      // Additional metadata about the analysis
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  documentId  String?
+  document    Document?  @relation(fields: [documentId], references: [id])
+  projectId   String?
+  project     Project?   @relation(fields: [projectId], references: [id])
+  createdById String?
+  createdBy   User?      @relation("AnalysisCreatedBy", fields: [createdById], references: [id], map: "fk_analysis_created_by")
+  entities    AnalysisEntity[]
+  
+  // Relation to User who performed the analysis
+  analyzedBy  User?     @relation("UserAnalyses", fields: [createdById], references: [id], map: "fk_analysis_analyzed_by")
+}
+
+model AIInteraction {
+  id          String     @id @default(cuid())
+  input       String     @db.Text
+  output      String     @db.Text
+  metadata    Json?
+  createdAt   DateTime   @default(now())
+
+
+  // Relations
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId  String?
+  document    Document?  @relation(fields: [documentId], references: [id])
+}
+
+// ==================== Knowledge Graph ====================
+model Glossary {
+  id          String    @id @default(cuid())
+  term        String
+  definition  String    @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Citation {
+  id          String    @id @default(cuid())
+  source      String
+  text        String    @db.Text
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+
+  // Relations
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model DocumentEntity {
+  id          String    @id @default(cuid())
+  type        String    // e.g., PERSON, ORGANIZATION, LOCATION
+  text        String
+  metadata    Json?
+  startOffset Int
+  endOffset   Int
+
+  // Relations
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  analyses    AnalysisEntity[]
+}
+
+model AnalysisEntity {
+  id          String    @id @default(cuid())
+  type        String
+  text        String
+  metadata    Json?
+  confidence  Float?
+  
+  // Relations
+  analysisId  String
+  analysis    Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  entityId    String?
+  entity      DocumentEntity? @relation(fields: [entityId], references: [id])
+}
+
+// ==================== Notifications ====================
+model Notification {
+  id          String    @id @default(cuid())
+  type        String
+  title       String
+  message     String
+  isRead      Boolean   @default(false)
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  readAt      DateTime?
+
+  // Relations
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, isRead])
+}

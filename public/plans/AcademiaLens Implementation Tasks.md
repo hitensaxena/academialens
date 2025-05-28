@@ -1390,6 +1390,7 @@ This document provides precise, small, actionable tasks for systematically build
    ```
 
 2. ✅ Create comparison table component
+
    ```typescript
    // components/visualizations/ComparisonTable.tsx
    export function ComparisonTable({ data }: { data: any }) {
@@ -2421,6 +2422,7 @@ This document provides precise, small, actionable tasks for systematically build
    ```
 
 2. ✅ Implement database query optimization
+
    ```typescript
    // Example of optimized query in projectService.ts
    export async function getProjectsOptimized(userId: string) {

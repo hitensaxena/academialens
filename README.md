@@ -65,6 +65,34 @@ academialens/
 
 ## Getting Started
 
+### Authentication Setup (NextAuth.js & Google)
+
+1. **Generate a NextAuth secret:**
+
+   ```sh
+   openssl rand -base64 32
+   ```
+
+   Place it in your `.env` and `.env.example` as `NEXTAUTH_SECRET`.
+
+2. **Google OAuth Credentials:**
+
+   - Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - Create an OAuth Client ID for a web application
+   - Set Authorized redirect URI to: `http://localhost:3000/api/auth/callback/google`
+   - Copy the `Client ID` and `Client Secret` to your `.env` and `.env.example`:
+     ```env
+     GOOGLE_CLIENT_ID=your_google_client_id
+     GOOGLE_CLIENT_SECRET=your_google_client_secret
+     ```
+
+3. **Example .env values:**
+   ```env
+   NEXTAUTH_SECRET=your_nextauth_secret
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
 ### Prerequisites
 
 - Node.js 20+
@@ -150,3 +178,43 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Authentication Flow & Security
+
+### Login & Registration
+
+- Users can log in or register using email/password or Google OAuth.
+- Forms provide real-time validation for email format, password length, and required fields.
+- Clear, accessible error and success messages are shown for all actions.
+
+### Callback URL Handling & Infinite Redirect Protection
+
+- All callback URLs are sanitized in both middleware and auth pages.
+- Unsafe callback URLs (pointing to `/auth/` or containing nested `callbackUrl` params) are ignored, preventing infinite redirect loops.
+- Authenticated users accessing `/auth/login` or `/auth/register` are redirected to the dashboard.
+
+### Middleware Route Protection
+
+- The middleware (in `middleware.ts` at the project root) protects all routes except public ones (`/auth/login`, `/auth/register`, `/`).
+- Unauthenticated users are redirected to the login page, with a safe callback URL if applicable.
+- Authenticated users are prevented from accessing auth routes.
+
+### How to Test
+
+- Try accessing protected pages as unauthenticated: you should be redirected to login, then to your intended page after login.
+- Try accessing `/auth/login` as an authenticated user: you should be redirected to the dashboard.
+- Try manipulating `callbackUrl` with `/auth/` or nested parameters: you should never get stuck in a redirect loop.
+- All error/success states should be clear and accessible.
+
+### Extending Authentication
+
+- To add new providers (e.g., GitHub), configure them in your NextAuth setup.
+- To change redirect logic, update the middleware and auth page logic.
+- To further improve UX, enhance form validation, add social logins, or polish UI with Tailwind.
+
+### Security Notes
+
+- Callback URLs are always sanitized to prevent open redirect and loop vulnerabilities.
+- Only public routes are accessible without authentication; all others are protected by middleware.
+
+---
