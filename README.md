@@ -10,12 +10,15 @@ AcademiaLens is an AI-powered web application designed to help researchers manag
 
 ## Key Features
 
-- Universal document ingestion and upload
+- Universal document ingestion and upload (PDF, DOCX, TXT)
 - AI-driven document analysis and insight extraction
 - Modular architecture for extensibility
-- Secure authentication and role-based access
+- Secure authentication and role-based access (NextAuth.js, session-aware dashboard)
 - Responsive UI with Tailwind CSS and Shadcn UI
 - Cloud storage integration (Cloudinary)
+- Session-based document filtering: Each user only sees their own uploaded documents in the dashboard
+- Document deletion with confirmation dialog and Cloudinary cleanup
+- Upload and deletion success/error feedback
 
 ---
 

@@ -23,13 +23,10 @@ enum SubscriptionStatus {
 
 enum FileType {
   PDF
+  TEXT
   DOCX
-  DOC
-  TXT
-  MD
-  HTML
-  PPTX
-  XLSX
+  URL
+  VIDEO
 }
 
 enum ProjectRole {
@@ -73,11 +70,12 @@ model User {
   projects          Project[]
   documents         Document[]
   analyses          Analysis[]         @relation("UserAnalyses")
-  glossaries        Glossary[]
+  createdAnalyses   Analysis[]         @relation("AnalysisCreatedBy")
   aiInteractions    AIInteraction[]
   notifications     Notification[]
   sharedProjects    ProjectMember[]
-  createdAnalyses   Analysis[]         @relation("AnalysisCreatedBy")
+  glossaries        Glossary[]
+  
 }
 
 model Account {
@@ -213,24 +211,51 @@ model DocumentChunk {
 
 // ==================== Analysis & AI ====================
 model Analysis {
-  id          String     @id @default(cuid())
-  type        String
-  result      Json
-  metadata    Json?      // Additional metadata about the analysis
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id              String        @id @default(cuid())
+  type            AnalysisType
+  status          AnalysisStatus @default(PENDING)
+  parameters      Json?         // Analysis parameters
+  result          Json?         // Analysis results
+  createdAt       DateTime      @default(now())
+  completedAt     DateTime?
+  error           String?
 
   // Relations
-  documentId  String?
-  document    Document?  @relation(fields: [documentId], references: [id])
-  projectId   String?
-  project     Project?   @relation(fields: [projectId], references: [id])
-  createdById String?
-  createdBy   User?      @relation("AnalysisCreatedBy", fields: [createdById], references: [id], map: "fk_analysis_created_by")
-  entities    AnalysisEntity[]
-  
-  // Relation to User who performed the analysis
-  analyzedBy  User?     @relation("UserAnalyses", fields: [createdById], references: [id], map: "fk_analysis_analyzed_by")
+  userId          String
+  user            User          @relation("UserAnalyses", fields: [userId], references: [id])
+  createdById     String?
+  createdBy       User?         @relation("AnalysisCreatedBy", fields: [createdById], references: [id])
+  projectId       String?
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  documents       Document[]    // Many-to-many for cross-document analysis
+  citations       Citation[]
+  aiInteractions  AIInteraction[]
+  entities        AnalysisEntity[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([type])
+  @@index([status])
+}
+enum AnalysisType {
+  SUMMARY
+  EXPLANATION
+  METHODOLOGY
+  CLAIMS_EVIDENCE
+  CROSS_DOCUMENT
+  COMPARISON
+  APPLICATION
+  SWOT
+  ETHICAL_IMPACT
+  INNOVATION
+  FUTURE_RESEARCH
+  QA
+}
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 model AIInteraction {
@@ -240,27 +265,33 @@ model AIInteraction {
   metadata    Json?
   createdAt   DateTime   @default(now())
 
-
   // Relations
   userId      String
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   documentId  String?
   document    Document?  @relation(fields: [documentId], references: [id])
+  analysisId  String?
+  analysis    Analysis?  @relation(fields: [analysisId], references: [id])
 }
 
 // ==================== Knowledge Graph ====================
 model Glossary {
-  id          String    @id @default(cuid())
-  term        String
-  definition  String    @db.Text
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  isAutoUpdated   Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId   String?
-  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId       String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  entries         DocumentEntity[]
+
+  @@index([userId])
+  @@index([projectId])
 }
 
 model Citation {
@@ -270,24 +301,42 @@ model Citation {
   metadata    Json?
   createdAt   DateTime  @default(now())
 
-
   // Relations
   documentId  String
   document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  analysisId  String?
+  analysis    Analysis? @relation(fields: [analysisId], references: [id])
 }
 
 model DocumentEntity {
-  id          String    @id @default(cuid())
-  type        String    // e.g., PERSON, ORGANIZATION, LOCATION
-  text        String
-  metadata    Json?
-  startOffset Int
-  endOffset   Int
+  id          String       @id @default(cuid())
+  name        String
+  type        EntityType
+  definition  String?      @db.Text
+  occurrences Json         // Array of {pageNumber, position} objects
 
   // Relations
   documentId  String
-  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document    Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  glossaryId  String?
+  glossary    Glossary?    @relation(fields: [glossaryId], references: [id])
   analyses    AnalysisEntity[]
+
+  @@index([documentId])
+  @@index([type])
+  @@index([name])
+}
+enum EntityType {
+  KEYWORD
+  PERSON
+  ORGANIZATION
+  LOCATION
+  CONCEPT
+  METHOD
+  DATASET
+  VARIABLE
+  ACRONYM
+  JARGON
 }
 
 model AnalysisEntity {
@@ -299,7 +348,7 @@ model AnalysisEntity {
   
   // Relations
   analysisId  String
-  analysis    Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis    Analysis  @relation(fields: [analysisId], references: [id])
   entityId    String?
   entity      DocumentEntity? @relation(fields: [entityId], references: [id])
 }
