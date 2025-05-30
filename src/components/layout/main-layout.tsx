@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { FileText, Home, Upload, Settings, BarChart, Folder, Loader2 } from 'lucide-react';
 
@@ -41,11 +41,10 @@ const navItems: NavItem[] = [
 ];
 
 interface MainLayoutProps {
-  children: ReactNode;
   initialScreen?: ScreenType;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({}: MainLayoutProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -113,32 +112,23 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        activeScreen={activeScreen}
-        onScreenChange={handleScreenChange}
-        navItems={navItems}
-      />
-
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <Header
-          onMenuClick={toggleSidebar}
-          user={user}
-          title={navItems.find(item => item.id === activeScreen)?.title || 'Dashboard'}
-          className="border-b"
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      {/* Header always at the top */}
+      <Header onMenuClick={toggleSidebar} user={user} className="border-b" />
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar */}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          activeScreen={activeScreen}
+          onScreenChange={handleScreenChange}
+          navItems={navItems}
         />
-
         {/* Main content */}
         <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
           {React.createElement(screenComponents[activeScreen] || (() => null))}
-          {children}
         </main>
       </div>
-
       {/* Toast notifications */}
       <Toaster />
     </div>
