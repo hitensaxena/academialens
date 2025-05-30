@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     console.log('Form data received');
 
     // Log form data entries
-    const formDataObj: Record<string, any> = {};
+    const formDataObj: Record<string, unknown> = {};
     for (const [key, value] of formData.entries()) {
       if (value instanceof File) {
         formDataObj[key] = {

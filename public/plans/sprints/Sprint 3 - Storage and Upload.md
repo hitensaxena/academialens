@@ -19,7 +19,7 @@ Enable secure document upload and storage integration.
    - `npm install cloudinary`
 3. Create utility functions for file upload, secure URL generation, and deletion.
 4. Implement file upload API route (Next.js API route).
-5. Validate file types (PDF, DOCX, TXT) and sizes.
+5. Validate file types (PDF, DOCX, TXT and more) and sizes.
 6. Store file metadata (URL, type, size) in the database.
 7. Implement file deletion and cleanup logic.
 

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
+  console.log('Rendering DashboardPage');
   const router = useRouter();
 
   // This page is rendered inside the MainLayout component

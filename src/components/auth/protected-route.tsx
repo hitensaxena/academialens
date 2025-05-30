@@ -12,6 +12,7 @@ type ProtectedRouteProps = {
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { data: session, status } = useSession();
+  console.log('ProtectedRoute session:', session, 'status:', status);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -48,7 +49,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Unauthorized</h2>
-          <p className="text-muted-foreground">You don't have permission to access this page.</p>
+          <p className="text-muted-foreground">You don&apos;t have access to this page.</p>
         </div>
       </div>
     );

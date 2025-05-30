@@ -11,6 +11,7 @@ interface AuthCheckProps {
 
 export function AuthCheck({ children, requiredRole }: AuthCheckProps) {
   const { data: session, status } = useSession();
+  console.log('AuthCheck session:', session, 'status:', status);
   const router = useRouter();
   const pathname = usePathname();
 

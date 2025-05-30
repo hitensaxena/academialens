@@ -3,10 +3,10 @@
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+
 import { ScrollArea } from '@/components/ui/scroll-area/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Icons } from '@/components/icons';
+
 import type { NavItem as NavItemType, ScreenType } from './sidebar.types';
 import { NavSection } from './nav-section';
 import { NavItem } from './nav-item';
@@ -19,6 +19,8 @@ interface SidebarProps {
   onScreenChange?: (screen: ScreenType) => void;
   onNavItemClick?: (item: NavItemType) => void;
   collapsed?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 export function Sidebar({
@@ -29,15 +31,26 @@ export function Sidebar({
   onScreenChange,
   onNavItemClick,
   collapsed = false,
+  isOpen = false,
+  onClose,
 }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(collapsed);
+  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
   React.useEffect(() => {
     setIsCollapsed(collapsed);
   }, [collapsed]);
+
+  React.useEffect(() => {
+    setIsMobileOpen(isOpen);
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsMobileOpen(false);
+    if (onClose) onClose();
+  };
 
   const handleNavItemClick = (item: NavItemType) => {
     if (onNavItemClick) {
@@ -49,7 +62,10 @@ export function Sidebar({
     if (item.href) {
       router.push(item.href);
     }
-    setOpen(false);
+    // Close mobile sidebar when an item is clicked
+    if (isMobileOpen) {
+      handleClose();
+    }
   };
 
   const isItemActive = React.useCallback(
@@ -97,16 +113,30 @@ export function Sidebar({
   return (
     <>
       {/* Mobile Navigation */}
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+        {/* Hidden trigger - controlled by the Header component */}
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="fixed left-4 top-4 z-50 md:hidden">
-            <Icons.menu className="h-6 w-6" />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
+          <div className="hidden" />
         </SheetTrigger>
         <SheetContent side="left" className="w-[280px] p-0">
+          {/* Visually hidden DialogTitle for accessibility */}
+          <span
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: 'hidden',
+              clip: 'rect(0,0,0,0)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
+            Sidebar Navigation
+          </span>
           <div className="flex h-full flex-col">
-            <div className="h-16 flex-shrink-0" /> {/* Spacer for header */}
+            <div className="h-16 flex-shrink-0" />
             <ScrollArea className="flex-1">
               <nav className="px-3 py-2">
                 <ul className="space-y-1.5">
@@ -117,7 +147,7 @@ export function Sidebar({
                   ))}
                 </ul>
                 {bottomNavItems.length > 0 && (
-                  <div className="border-t border-gray-200 dark:border-gray-800 mt-3 pt-3">
+                  <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-800">
                     <ul className="space-y-1.5">
                       {bottomNavItems.map((item, index) => (
                         <li key={`mobile-bottom-${item.id || index}`} className="px-2">
@@ -134,22 +164,28 @@ export function Sidebar({
       </Sheet>
 
       {/* Desktop Navigation */}
-      <div className={cn('hidden md:flex md:flex-col md:w-64 h-screen sticky top-0', className)}>
+      <div
+        className={cn(
+          'hidden h-screen flex-col border-r bg-background transition-all duration-300 ease-in-out md:flex',
+          isCollapsed ? 'w-20' : 'w-64',
+          className,
+        )}
+      >
         <div className="h-16 flex-shrink-0" /> {/* Spacer for header */}
         <ScrollArea className="flex-1">
           <nav className="px-3 py-2">
             <ul className="space-y-1.5">
               {navItems.map((item, index) => (
-                <li key={item.id || index} className="px-2">
+                <li key={`desktop-${item.id || index}`} className="px-2">
                   {renderNavItem(item, index)}
                 </li>
               ))}
             </ul>
             {bottomNavItems.length > 0 && (
-              <div className="border-t border-gray-200 dark:border-gray-800 mt-3 pt-3">
+              <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-800">
                 <ul className="space-y-1.5">
                   {bottomNavItems.map((item, index) => (
-                    <li key={item.id || `bottom-${index}`} className="px-2">
+                    <li key={`desktop-bottom-${item.id || index}`} className="px-2">
                       {renderNavItem(item, index)}
                     </li>
                   ))}

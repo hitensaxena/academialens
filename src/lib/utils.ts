@@ -2,8 +2,6 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 // Type utilities
-type Nullable<T> = T | null | undefined;
-type MaybePromise<T> = T | Promise<T>;
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -30,7 +28,7 @@ export function formatFileSize(bytes: number): string {
  * @param func The function to debounce
  * @param wait The number of milliseconds to delay
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number,
 ): (...args: Parameters<T>) => void {
@@ -50,7 +48,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param func The function to throttle
  * @param limit The time limit in milliseconds
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number,
 ): (...args: Parameters<T>) => void {
@@ -77,18 +75,19 @@ export function isDefined<T>(value: T | null | undefined): value is T {
  * @param path The path to the property
  * @param defaultValue The default value if the property doesn't exist
  */
-export function get<T>(obj: any, path: string | string[], defaultValue?: T): T | undefined {
+export function get<T>(obj: unknown, path: string | string[], defaultValue?: T): T | undefined {
   try {
     const pathArray = Array.isArray(path) ? path : path.split('.').filter(Boolean);
-    let result = obj;
-
+    let result: unknown = obj;
     for (const key of pathArray) {
-      result = result?.[key];
-      if (result === undefined) return defaultValue;
+      if (result == null || typeof result !== 'object' || !(key in result)) {
+        return defaultValue;
+      }
+      result = (result as Record<string, unknown>)[key];
     }
-
-    return result !== undefined ? result : defaultValue;
-  } catch (error) {
+    // Only return result if it matches T, otherwise return defaultValue
+    return result !== undefined ? (result as T) : defaultValue;
+  } catch {
     return defaultValue;
   }
 }
@@ -159,7 +158,7 @@ export function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
+    reader.onerror = reject;
   });
 }
 

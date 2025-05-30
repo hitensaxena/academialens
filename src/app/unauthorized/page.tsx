@@ -12,7 +12,9 @@ export default function UnauthorizedPage() {
         <div className="space-y-2">
           <h1 className="text-4xl font-bold tracking-tight">403</h1>
           <h2 className="text-2xl font-semibold">Unauthorized Access</h2>
-          <p className="text-muted-foreground">You don't have permission to access this page.</p>
+          <p className="text-muted-foreground">
+            You don&apos;t have permission to access this page.
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">

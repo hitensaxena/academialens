@@ -3,7 +3,7 @@ import { Providers } from '@/components/providers/session-provider';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { AuthCheck } from '@/components/auth/auth-check';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/ui/toast/toaster';
 import './globals.css';
 
 // Define fonts for the app
@@ -25,6 +25,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log('Rendering RootLayout');
   return (
     <html
       lang="en"

@@ -1,12 +1,16 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, Home, Upload, Settings, BarChart, Folder } from 'lucide-react';
+import { FileText, Home, Upload, Settings, BarChart, Folder, Loader2 } from 'lucide-react';
 
 import { Sidebar } from './sidebar';
 import { Header } from './header';
-import type { NavItem, ScreenType } from './sidebar.types';
+import { Toaster } from '@/components/ui/toaster';
+import { useUIStore } from '@/store/ui-store';
+import { useUserStore } from '@/store/user-store';
+import { useSession } from 'next-auth/react';
+import type { ScreenType, NavItem } from './sidebar.types';
 
 // Import your screen components
 import { DashboardScreen } from '@/app/dashboard/screens/dashboard';
@@ -15,11 +19,6 @@ import { DocumentsScreen } from '@/app/dashboard/screens/documents';
 import { ProjectsScreen } from '@/app/dashboard/screens/projects';
 import UploadScreen from '@/app/dashboard/screens/upload';
 import { SettingsScreen } from '@/app/dashboard/screens/settings';
-
-interface MainLayoutProps {
-  children: ReactNode;
-  initialScreen?: ScreenType;
-}
 
 // Screen components mapping
 const screenComponents: Record<string, React.ComponentType> = {
@@ -31,77 +30,67 @@ const screenComponents: Record<string, React.ComponentType> = {
   settings: SettingsScreen,
 };
 
-export function MainLayout({ children, initialScreen = 'dashboard' }: MainLayoutProps) {
-  const [activeScreen, setActiveScreen] = useState<ScreenType>(initialScreen);
+// Navigation items configuration
+const navItems: NavItem[] = [
+  { id: 'dashboard', title: 'Dashboard', icon: Home },
+  { id: 'documents', title: 'Documents', icon: FileText },
+  { id: 'analysis', title: 'Analysis', icon: BarChart },
+  { id: 'projects', title: 'Projects', icon: Folder },
+  { id: 'upload', title: 'Upload', icon: Upload },
+  { id: 'settings', title: 'Settings', icon: Settings },
+];
+
+interface MainLayoutProps {
+  children: ReactNode;
+  initialScreen?: ScreenType;
+}
+
+export function MainLayout({ children }: MainLayoutProps) {
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
-  // Update active screen based on URL path
-  useEffect(() => {
-    const pathParts = pathname.split('/').filter(Boolean);
-    const screenFromPath = (pathParts[pathParts.length - 1] || '') as ScreenType;
+  // State from stores
+  const { isSidebarOpen, setSidebarOpen } = useUIStore();
+  const { user, setUser } = useUserStore();
 
-    // If we're on a valid screen route
-    if (screenFromPath && Object.keys(screenComponents).includes(screenFromPath)) {
-      if (activeScreen !== screenFromPath) {
-        setActiveScreen(screenFromPath);
-      }
+  // Hydrate user store from NextAuth session
+  React.useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      setUser({
+        ...session.user,
+        name: session.user.name ?? '',
+        email: session.user.email ?? '',
+        image: session.user.image ?? '',
+        // Patch missing fields with null/defaults
+        title: null,
+        createdAt: null as unknown as Date,
+        updatedAt: null as unknown as Date,
+        institution: null,
+        department: null,
+        bio: null,
+        researchInterests: [],
+        stripeCustomerId: null,
+        subscriptionStatus: null,
+        subscriptionId: null,
+        subscriptionPeriodEnd: null as unknown as Date,
+        // Add more fields as required by your user model
+      });
     }
-    // Handle the root dashboard route
-    else if (
-      pathname.endsWith('/dashboard') ||
-      pathname.endsWith('/dashboard/') ||
-      pathname === '/'
-    ) {
-      if (activeScreen !== 'dashboard') {
-        setActiveScreen('dashboard');
-      }
-      // If we're at /dashboard/dashboard, redirect to /dashboard
-      if (pathname.endsWith('/dashboard/dashboard')) {
-        router.replace('/dashboard');
-      }
-    }
-  }, [pathname, activeScreen, router]);
+  }, [status, session, setUser]);
 
-  const navItems: NavItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: Home,
-    },
-    {
-      id: 'analysis',
-      title: 'Analysis',
-      icon: BarChart,
-    },
-    {
-      id: 'documents',
-      title: 'Documents',
-      icon: FileText,
-    },
-    {
-      id: 'projects',
-      title: 'Projects',
-      icon: Folder,
-    },
-    {
-      id: 'upload',
-      title: 'Upload',
-      icon: Upload,
-    },
-  ];
+  // Get active screen from URL
+  const pathParts = pathname.split('/').filter(Boolean);
+  const screenFromPath = (pathParts[pathParts.length - 1] || 'dashboard') as ScreenType;
+  const activeScreen = Object.keys(screenComponents).includes(screenFromPath)
+    ? screenFromPath
+    : 'dashboard';
 
-  const bottomNavItems: NavItem[] = [
-    {
-      id: 'settings',
-      title: 'Settings',
-      icon: Settings,
-    },
-  ];
-
+  // Handle screen changes
   const handleScreenChange = (screen: ScreenType) => {
-    setActiveScreen(screen);
-    // Use Next.js router to update the URL
+    if (screen === activeScreen) return;
+
+    // Update URL without page reload
     if (screen === 'dashboard') {
       router.push('/dashboard');
     } else {
@@ -109,24 +98,49 @@ export function MainLayout({ children, initialScreen = 'dashboard' }: MainLayout
     }
   };
 
-  // Get the active screen component if it exists
-  const ActiveScreenComponent = screenComponents[activeScreen];
-  const showActiveScreen = ActiveScreenComponent && !children;
+  // Toggle sidebar
+  const toggleSidebar = () => {
+    setSidebarOpen(!isSidebarOpen);
+  };
+
+  // Show loading state if user data is not loaded yet
+  if (!user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen w-full overflow-hidden">
+      {/* Sidebar */}
       <Sidebar
-        navItems={navItems}
+        isOpen={isSidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         activeScreen={activeScreen}
         onScreenChange={handleScreenChange}
-        bottomNavItems={bottomNavItems}
+        navItems={navItems}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/40 p-4 md:p-6">
-          {showActiveScreen ? <ActiveScreenComponent /> : children}
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <Header
+          onMenuClick={toggleSidebar}
+          user={user}
+          title={navItems.find(item => item.id === activeScreen)?.title || 'Dashboard'}
+          className="border-b"
+        />
+
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+          {React.createElement(screenComponents[activeScreen] || (() => null))}
+          {children}
         </main>
       </div>
+
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,19 +13,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/user-avatar';
 
+import type { User } from '@/types/user';
+
 interface UserNavProps {
-  user?: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
+  user?: User | null;
 }
 
 export function UserNav({ user }: UserNavProps) {
   if (!user) {
     return (
       <Button asChild variant="outline">
-        <a href="/api/auth/signin">Sign in</a>
+        <Link href="/api/auth/signin">Sign in</Link>
       </Button>
     );
   }
@@ -47,10 +46,10 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <a href="/profile">Profile</a>
+          <Link href="/profile">Profile</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href="/settings">Settings</a>
+          <Link href="/settings">Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

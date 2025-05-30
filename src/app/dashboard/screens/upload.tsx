@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FileText, Upload, Loader2, X, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ interface FetchError extends Error {
   code?: string;
   status?: number;
   statusText?: string;
-  response?: any;
+  response?: unknown;
 }
 
 const formatFileSize = (bytes: number): string => {

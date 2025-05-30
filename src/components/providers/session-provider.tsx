@@ -8,7 +8,7 @@ import { ReactNode } from 'react';
 type ProvidersProps = {
   children: ReactNode;
   themeProps?: Omit<ThemeProviderProps, 'children'>;
-  session?: any; // Session from getServerSession
+  session?: unknown; // Session from getServerSession
 };
 
 export function Providers({ children, themeProps, session }: ProvidersProps) {

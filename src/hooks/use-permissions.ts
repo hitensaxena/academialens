@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { hasPermission, createPermissionChecker } from '@/lib/permissions';
+import { hasPermission } from '@/lib/permissions';
 
 /**
  * Hook to check if the current user has a specific permission
