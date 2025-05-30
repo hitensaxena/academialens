@@ -4,7 +4,15 @@
 
 > AI-powered academic research assistant | Modular | Open Source
 
-AcademiaLens is an AI-powered web application designed to help researchers manage, analyze, and extract insights from academic documents. Built with Next.js, TypeScript, Prisma, and Gemini AI, it provides a modular, scalable, and user-friendly platform for research workflows.
+AcademiaLens is an AI-powered web application designed to help researchers manage, analyze, and extract insights from academic documents. Built with Next.js, TypeScript, Prisma, and Cloudinary, it provides a modular, scalable, and user-friendly platform for research workflows.
+
+## 🚀 Latest Updates
+
+- **Complete Dashboard Navigation** - Seamless routing between dashboard sections
+- **File Upload System** - Support for PDF, DOCX, and TXT files with Cloudinary integration
+- **Responsive UI** - Built with Tailwind CSS and Shadcn UI components
+- **Authentication** - Secure user authentication with NextAuth.js
+- **Document Management** - Upload, view, and manage research documents
 
 ---
 

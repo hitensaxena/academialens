@@ -1,0 +1,23 @@
+/* General font smoothing for the body */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Specific font features for monospaced elements */
+/* The font-family itself is applied via globals.css using --font-geist-mono */
+code,
+kbd,
+pre,
+samp {
+  font-feature-settings:
+    'liga' 1,
+    'calt' 1;
+}
+
+/* Ensure proper font rendering for all elements */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

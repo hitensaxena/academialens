@@ -1,19 +1,23 @@
-import { prisma } from '@/lib/db/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import DocumentsClientTable from './table-client';
+'use client';
 
-export default async function DocumentsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    // Optionally, you could redirect to login or show a message
-    return (
-      <div className="text-center mt-10 text-red-600">You must be logged in to view documents.</div>
-    );
-  }
-  const documents = await prisma.document.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-  });
-  return <DocumentsClientTable documents={JSON.parse(JSON.stringify(documents))} />;
+import { FileText } from 'lucide-react';
+
+export default function DocumentsPage() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight">Documents</h2>
+        <p className="text-muted-foreground">View and manage your uploaded documents.</p>
+      </div>
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No documents yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Upload your first document to get started.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -1,0 +1,44 @@
+# Ignore all files
+**/*
+
+# Allow specific files and directories
+!**/.eslintrc.js
+!**/.eslintrc.cjs
+!**/.eslintrc.json
+!**/.eslintrc
+!**/.eslintrc.yml
+!**/.eslintrc.yaml
+
+# Allow specific directories
+!src/**/*.{ts,tsx,js,jsx}
+!pages/**/*.{ts,tsx,js,jsx}
+!app/**/*.{ts,tsx,js,jsx}
+!components/**/*.{ts,tsx,js,jsx}
+!lib/**/*.{ts,tsx,js,jsx}
+!hooks/**/*.{ts,tsx,js,jsx}
+!types/**/*.{ts,tsx,js,jsx}
+
+# Ignore build and cache directories
+.next/
+out/
+build/
+dist/
+node_modules/
+
+# Ignore environment files
+.env*
+!.env.example
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+*.sublime-*
+
+# Ignore OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

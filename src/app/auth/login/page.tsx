@@ -1,51 +1,36 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  let callbackUrl = searchParams.get('callbackUrl') || '/dashboard/dashboard';
-  const { status } = useSession();
 
-  // Harden callbackUrl
-  function isUnsafe(url: string | null) {
-    if (!url) return false;
+  // Get and validate callback URL
+  const getSafeCallbackUrl = () => {
     try {
-      const decoded = decodeURIComponent(url);
-      if (decoded.startsWith('/auth/') || decoded.includes('callbackUrl=')) {
-        return true;
+      const url = searchParams.get('callbackUrl') || '/dashboard';
+      // Prevent open redirects
+      if (url.startsWith('http') || url.startsWith('//')) {
+        return '/dashboard';
       }
+      // Prevent auth loops
+      if (url.startsWith('/auth/')) {
+        return '/dashboard';
+      }
+      return url;
     } catch {
-      return true;
+      return '/dashboard';
     }
-    return false;
-  }
-  if (isUnsafe(callbackUrl)) {
-    callbackUrl = '/dashboard/dashboard';
-  } else {
-    try {
-      callbackUrl = decodeURIComponent(callbackUrl);
-    } catch {
-      callbackUrl = '/dashboard/dashboard';
-    }
-  }
+  };
 
+  const callbackUrl = getSafeCallbackUrl();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.push(callbackUrl);
-    }
-  }, [status, router, callbackUrl]);
-
-  if (status === 'loading' || status === 'authenticated') {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
-  }
+  // No need for authenticated redirect here - handled by AuthWrapper
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -65,11 +50,11 @@ export default function LoginPage() {
         let targetUrl = callbackUrl;
         try {
           const decoded = decodeURIComponent(targetUrl);
-          if (decoded.startsWith('/auth/')) {
-            targetUrl = '/dashboard/dashboard';
+          if (decoded.startsWith('/auth/') || !decoded.startsWith('/')) {
+            targetUrl = '/dashboard';
           }
         } catch {
-          targetUrl = '/dashboard/dashboard';
+          targetUrl = '/dashboard';
         }
         router.push(targetUrl);
       }

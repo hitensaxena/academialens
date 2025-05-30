@@ -2,82 +2,117 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-const publicPaths = ['/auth/login', '/auth/register', '/'];
+// List of public paths that don't require authentication
+const publicPaths = [
+  '/',
+  '/auth/login',
+  '/auth/register',
+  '/auth/error',
+  '/unauthorized',
+  '/_next',
+  '/favicon.ico',
+  '/api/auth',
+  '/images',
+];
+
+// List of API routes that don't require authentication
+const publicApiPaths = ['/api/auth', '/api/health', '/api/public'];
+
+// List of admin paths that require admin role
+const adminPaths = ['/admin', '/api/admin'];
 
 export async function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl;
+  const { pathname } = request.nextUrl;
+  console.log('Middleware - Path:', pathname);
 
-  // Allow all API routes and static files
+  const isPublicPath = publicPaths.some(path => {
+    const isMatch = pathname === path || pathname.startsWith(`${path}/`);
+    if (isMatch) {
+      console.log('Path is public:', path);
+    }
+    return isMatch;
+  });
+
+  // Allow public paths
+  if (isPublicPath) {
+    console.log('Allowing public path:', pathname);
+    return NextResponse.next();
+  }
+
+  // Skip middleware for static files and API routes that don't need auth
   if (
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/_next/') ||
-    pathname.includes('.') ||
-    pathname.startsWith('/favicon.ico')
+    pathname.match(/\.(css|js|png|jpg|jpeg|svg|gif|ico|woff|woff2|ttf|eot)$/) ||
+    (pathname.startsWith('/api/') && publicApiPaths.some(apiPath => pathname.startsWith(apiPath)))
   ) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req: request });
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
-  let callbackUrl = searchParams.get('callbackUrl');
+  // Get the session token
+  console.log('Checking session for path:', pathname);
+  const session = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
-  // --- Sanitize callbackUrl ---
-  function isUnsafe(url: string | null) {
-    if (!url) return false;
-    try {
-      const decoded = decodeURIComponent(url);
-      // Never allow callbackUrl to be an /auth/ route or contain another callbackUrl param
-      if (decoded.startsWith('/auth/') || decoded.includes('callbackUrl=')) {
-        return true;
-      }
-    } catch (e) {
-      return true;
-    }
-    return false;
-  }
-  // DEBUG LOGGING
+  console.log('Session data:', session ? 'Authenticated' : 'No session');
 
-  // HARD BLOCK: If on /auth/login and callbackUrl is present, always redirect to safe default
-  if (pathname.startsWith('/auth/login') && searchParams.get('callbackUrl')) {
-    if (token) {
-      return NextResponse.redirect(new URL('/dashboard/dashboard', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-  }
-
-  // If user is not authenticated and trying to access a protected route
-  if (!token && !isPublicPath) {
+  // If no session and trying to access protected route, redirect to login
+  if (!session) {
+    console.log('No session found, redirecting to login');
     const loginUrl = new URL('/auth/login', request.url);
-    // Only set callbackUrl if we're not already on the login page and there isn't already a callbackUrl
-    if (!pathname.startsWith('/auth/') && !callbackUrl) {
-      loginUrl.searchParams.set('callbackUrl', pathname);
-      console.log('MIDDLEWARE: redirecting unauthenticated to', loginUrl.toString());
-    } else if (callbackUrl) {
-      // If callbackUrl is unsafe, remove it and redirect to root
-      if (isUnsafe(callbackUrl)) {
-        loginUrl.searchParams.delete('callbackUrl');
-        return NextResponse.redirect(new URL('/', request.url));
-      } else {
-        loginUrl.searchParams.set('callbackUrl', decodeURIComponent(callbackUrl));
-      }
-    }
+    loginUrl.searchParams.set('callbackUrl', encodeURI(request.url));
+    console.log('Redirecting to:', loginUrl.toString());
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is authenticated and trying to access auth routes
-  if (token && isPublicPath) {
-    // If there's a callbackUrl and it's safe, use it
-    if (callbackUrl && !isUnsafe(callbackUrl)) {
-      return NextResponse.redirect(new URL(decodeURIComponent(callbackUrl), request.url));
-    }
-    // Otherwise, redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard/dashboard', request.url));
+  // Check if the path requires admin role
+  const isAdminPath = adminPaths.some(path => pathname === path || pathname.startsWith(`${path}/`));
+
+  // If user is not an admin but trying to access admin path
+  if (isAdminPath && session.role !== 'admin') {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 
-  return NextResponse.next();
+  // If user is authenticated but tries to access auth pages, redirect to dashboard
+  if (pathname.startsWith('/auth')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Add security headers to all responses
+  const response = NextResponse.next();
+
+  // Security headers
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // CSP Header - adjust according to your needs
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+
+  response.headers.set('Content-Security-Policy', csp);
+
+  return response;
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes) - handled separately in the middleware
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };
