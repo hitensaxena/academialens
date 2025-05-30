@@ -6,13 +6,34 @@
 
 AcademiaLens is an AI-powered web application designed to help researchers manage, analyze, and extract insights from academic documents. Built with Next.js, TypeScript, Prisma, and Cloudinary, it provides a modular, scalable, and user-friendly platform for research workflows.
 
+---
+
+## 🟢 Sprint 4.5 Release Note
+
+- **Complete Dashboard Redesign:** Actionable, insight-driven workspace hub for scholars
+- **New Sections:** Personalized snapshot, recent activity, initiate new research, AI insights feed
+- **Knowledge Base Growth Metrics:** Value-oriented, growth-focused analytics and progress bars
+- **Usage Transparency:** Subtle, clear display of analysis credits and AI usage
+- **UI/UX Polish:** Shadcn UI, Tailwind, Lucide icons, micro-interactions, loading/empty states, and mobile responsiveness
+
+---
+
 ## 🚀 Latest Updates
 
+- **Major Layout Refactor (May 2025):**
+
+  - Header is now always full-width and fixed at the top, with the "AcademiaLens" app name on the left and a centered search bar.
+  - Sidebar now appears below the header (not overlapping), providing clear separation and improved navigation.
+  - Main content area is horizontally aligned with the sidebar, ensuring a clean and organized layout.
+  - Fixed an issue where dashboard content was duplicated in the main container.
+  - All code is linted and up-to-date with the latest UI/UX best practices.
+
 - **Complete Dashboard Navigation** - Seamless routing between dashboard sections
-- **File Upload System** - Support for PDF, DOCX, and TXT files with Cloudinary integration
-- **Responsive UI** - Built with Tailwind CSS and Shadcn UI components
-- **Authentication** - Secure user authentication with NextAuth.js
-- **Document Management** - Upload, view, and manage research documents
+- **Responsive Sidebar** - Toggle sidebar for mobile and desktop
+- **User Profile Integration** - Session-aware user navigation
+- **Document Management** - Upload, view, and delete documents with feedback
+- **Cloud Storage** - Cloudinary integration for uploads
+- **AI Analysis** - Summarize and extract insights from documents
 
 ---
 
@@ -27,6 +48,20 @@ AcademiaLens is an AI-powered web application designed to help researchers manag
 - Session-based document filtering: Each user only sees their own uploaded documents in the dashboard
 - Document deletion with confirmation dialog and Cloudinary cleanup
 - Upload and deletion success/error feedback
+
+---
+
+## 📊 New Dashboard Experience (Sprint 4.5)
+
+AcademiaLens now features a fully redesigned, actionable dashboard—a true "Research Workspace Hub" for academic scholars:
+
+- **Personalized Research Snapshot:** Welcome greeting, progress metrics, and a prominent "Start New Research" CTA.
+- **Recent Activity & Status:** Instantly resume or review in-progress and recently completed work, with status badges and direct actions.
+- **Initiate New Research:** Grid of action buttons for uploading papers, analyzing URLs, transcribing videos, starting synthesis projects, and pasting quick text—all grouped for workflow clarity and accessibility.
+- **Latest Discoveries & AI Insights:** Dynamic, actionable feed of AI-generated insights, summaries, and discoveries, each with context and direct links.
+- **Knowledge Base Growth:** Metrics reframed to show knowledge base expansion, with progress bars, tooltips, and encouraging feedback.
+- **Usage Transparency:** Subtle, non-alarming display of AI analysis credits/usage with clear tooltips.
+- **Modern UI/UX:** Built with Shadcn UI, Tailwind CSS, and Lucide React icons for a beautiful, responsive, and accessible experience. Includes micro-interactions, loading indicators, and empty/edge states for all sections.
 
 ---
 

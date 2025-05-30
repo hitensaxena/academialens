@@ -7,26 +7,26 @@ interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
   asChild?: boolean;
 }
 
-const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
-  ({ className, user, ...props }, ref) => {
-    return (
-      <span
-        ref={ref}
-        className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', className)}
-        {...props}
-      >
-        <Image
-          src={user?.image || '/default-avatar.png'}
-          className="rounded-full"
-          width={40}
-          height={40}
-          alt={user?.name ? `${user.name}'s avatar` : 'User avatar'}
-        />
-        ,
-      </span>
-    );
-  },
-);
+const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
+  { className, user, ...props },
+  ref,
+) {
+  return (
+    <span
+      ref={ref}
+      className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', className)}
+      {...props}
+    >
+      <Image
+        src={user?.image || '/default-avatar.png'}
+        className="rounded-full"
+        width={40}
+        height={40}
+        alt={user?.name ? `${user.name}'s avatar` : 'User avatar'}
+      />
+    </span>
+  );
+});
 Avatar.displayName = 'Avatar';
 
 const AvatarImage = React.forwardRef<
