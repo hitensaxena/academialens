@@ -1,12 +1,19 @@
+// @ts-check
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  webpack: config => {
+  webpack: (config) => {
     // This makes sure that path aliases in tsconfig.json work with webpack
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'),
     };
     return config;
   },
@@ -28,4 +35,5 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Export the Next.js config
+export default nextConfig;

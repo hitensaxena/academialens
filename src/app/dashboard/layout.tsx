@@ -4,17 +4,7 @@ import { Inter } from 'next/font/google';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Menu,
-  X,
-  Home,
-  Folder,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  Upload,
-  User,
-} from 'lucide-react';
+import { X, Home, Folder, FileText, ChevronLeft, ChevronRight, Upload, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';

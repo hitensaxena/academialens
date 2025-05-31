@@ -1,13 +1,15 @@
-import NextAuth, { DefaultSession, DefaultUser } from 'next-auth';
+// TypeScript type declarations for NextAuth.js
+import 'next-auth';
 
 declare module 'next-auth' {
   interface Session {
     user?: {
       id?: string;
       role?: string;
-    } & DefaultSession['user'];
+    } & import('next-auth').DefaultSession['user'];
   }
-  interface User extends DefaultUser {
+
+  interface User extends import('next-auth').DefaultUser {
     role?: string;
   }
 }

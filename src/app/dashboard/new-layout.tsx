@@ -19,8 +19,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 
-// Import the Card component from the UI library
-import { Card } from '@/components/ui/card';
+// Card component removed as it's not being used
 
 type NavItem = {
   name: string;

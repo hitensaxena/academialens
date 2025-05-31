@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   ArrowUpRightIcon,
   DocumentTextIcon,
@@ -10,34 +10,7 @@ import {
   FolderIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon,
 } from '@heroicons/react/24/outline';
-
-// Simple Button component
-const Button = ({
-  children,
-  variant = 'primary',
-  className = '',
-  ...props
-}: {
-  children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
-  className?: string;
-  [key: string]: any;
-}) => {
-  const baseStyles = 'px-4 py-2 rounded-md font-medium transition-colors';
-  const variantStyles = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-700 text-white hover:bg-gray-600',
-    ghost: 'text-gray-300 hover:bg-gray-700 hover:text-white',
-  };
-
-  return (
-    <button className={`${baseStyles} ${variantStyles[variant]} ${className}`} {...props}>
-      {children}
-    </button>
-  );
-};
 
 // Simple Card component
 const Card = ({
@@ -171,7 +144,14 @@ const ActivityItem = ({ type, title, time, user, userAvatar }: Omit<ActivityItem
       <div className="flex-shrink-0 mr-3">
         <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
           {userAvatar ? (
-            <img className="h-10 w-10 rounded-full" src={userAvatar} alt={user} />
+            <Image
+              className="h-10 w-10 rounded-full"
+              src={userAvatar}
+              alt={user}
+              width={40}
+              height={40}
+              unoptimized
+            />
           ) : (
             <span className="text-white font-medium">{user.charAt(0).toUpperCase()}</span>
           )}
@@ -180,7 +160,8 @@ const ActivityItem = ({ type, title, time, user, userAvatar }: Omit<ActivityItem
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white">
           <span className="text-blue-400">{user}</span>{' '}
-          {type === 'upload' ? 'uploaded' : type === 'analysis' ? 'analyzed' : type} "{title}"
+          {type === 'upload' ? 'uploaded' : type === 'analysis' ? 'analyzed' : type} &quot;{title}
+          &quot;
         </p>
         <div className="flex items-center mt-1">
           <div className="mr-2">{getIcon()}</div>
@@ -192,9 +173,9 @@ const ActivityItem = ({ type, title, time, user, userAvatar }: Omit<ActivityItem
 };
 
 const NewDashboard = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
-  const [projects, setProjects] = useState([
+  const [projects] = useState([
     {
       id: 'ai-research',
       title: 'AI Research Paper',
@@ -226,7 +207,7 @@ const NewDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading data
+    // Fetch projects or other data here
     const timer = setTimeout(() => {
       setRecentActivity([
         {

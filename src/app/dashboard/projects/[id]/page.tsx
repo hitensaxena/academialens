@@ -190,64 +190,6 @@ const mockProject: Project = {
   ],
 };
 
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    name: 'homepage-mockup.fig',
-    type: 'fig',
-    size: '24.5',
-    uploadedAt: '2023-06-28T09:10:00Z',
-    uploadedBy: 'Alex Johnson',
-    status: 'synced',
-    version: 3,
-    folder: 'Design',
-  },
-  {
-    id: '2',
-    name: 'style-guide.pdf',
-    type: 'pdf',
-    size: '4.2',
-    uploadedAt: '2023-06-28T08:30:00Z',
-    uploadedBy: 'Sarah Williams',
-    status: 'synced',
-    version: 1,
-    folder: 'Design/Assets',
-  },
-  {
-    id: '3',
-    name: 'api-specs.md',
-    type: 'md',
-    size: '0.8',
-    uploadedAt: '2023-06-27T16:30:00Z',
-    uploadedBy: 'Michael Chen',
-    status: 'synced',
-    version: 5,
-    folder: 'Documentation',
-  },
-  {
-    id: '4',
-    name: 'user-flows.pdf',
-    type: 'pdf',
-    size: '12.1',
-    uploadedAt: '2023-06-26T14:20:00Z',
-    uploadedBy: 'Emily Rodriguez',
-    status: 'synced',
-    version: 2,
-    folder: 'Design/Flows',
-  },
-  {
-    id: '5',
-    name: 'color-palette.sketch',
-    type: 'sketch',
-    size: '8.7',
-    uploadedAt: '2023-06-25T11:15:00Z',
-    uploadedBy: 'Alex Johnson',
-    status: 'synced',
-    version: 1,
-    folder: 'Design/Assets',
-  },
-];
-
 const ProjectPage = () => {
   const router = useRouter();
   const { toast } = useToast();

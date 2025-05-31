@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, Upload, Plus, Search, Filter, ChevronRight } from 'lucide-react';
+import { Upload, Plus, Search, Filter, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Project = {
@@ -61,7 +61,9 @@ export default function HomePage() {
         {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back, Alex</h1>
-          <p className="text-muted-foreground">Here's what's happening with your projects today.</p>
+          <p className="text-muted-foreground">
+            Here&apos;s what&apos;s happening with your projects today.
+          </p>
         </div>
 
         {/* Action Buttons */}

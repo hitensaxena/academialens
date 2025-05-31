@@ -18,20 +18,17 @@ interface Document {
   error?: string;
   chunks?: {
     id: string;
-    content: string;
-    pageNumber?: number;
-    metadata: Record<string, any>;
-  }[];
+    pages: {
+      content: string;
+      pageNumber?: number;
+      metadata: Record<string, unknown>;
+    }[];
+  };
   createdAt: string;
   updatedAt: string;
 }
 
-interface FetchError extends Error {
-  code?: string;
-  status?: number;
-  statusText?: string;
-  response?: unknown;
-}
+// Interface removed as it's not being used
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -302,6 +299,9 @@ export default function UploadScreen() {
 
       // Send the request
       xhr.send(formData);
+
+      // Cleanup timeout on unmount or completion
+      return () => clearTimeout(timeoutId);
     } catch (error) {
       handleUploadError(error, 'An error occurred during upload');
     } finally {

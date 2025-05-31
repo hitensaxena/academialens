@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Search, Menu, Bell } from 'lucide-react';
-import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';

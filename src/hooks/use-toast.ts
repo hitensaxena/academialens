@@ -42,8 +42,13 @@ export function useToast(): UseToastReturn {
       if (typeof window === 'undefined' || pathname?.startsWith('/auth')) {
         return {
           id: '',
-          dismiss: () => {},
-          update: () => {},
+          // No-op functions for SSR or auth pages
+          dismiss: (): void => {
+            // No operation during SSR or on auth pages
+          },
+          update: (): void => {
+            // No operation during SSR or on auth pages
+          },
         };
       }
 

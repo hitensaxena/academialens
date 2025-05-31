@@ -2,6 +2,21 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
 // Type for the document status response
+interface DocumentMetadata {
+  status?: string;
+  publicId?: string;
+  format?: string;
+  resourceType?: string;
+  originalFilename?: string;
+  uploadedAt?: string;
+  processingStartedAt?: string;
+  processedAt?: string;
+  error?: string;
+  pages?: number;
+  textLength?: number;
+  extractedFields?: Record<string, unknown>;
+}
+
 interface DocumentStatusResponse {
   id: string;
   title: string;
@@ -13,7 +28,7 @@ interface DocumentStatusResponse {
   fileSize: number;
   createdAt: Date;
   updatedAt: Date;
-  metadata: any;
+  metadata: DocumentMetadata;
   message: string;
   estimatedTimeRemaining?: number;
 }
@@ -29,7 +44,10 @@ interface DocumentMetadata {
   processingStartedAt?: string;
   processedAt?: string;
   error?: string;
-  [key: string]: any;
+  pages?: number;
+  textLength?: number;
+  extractedFields?: Record<string, unknown>;
+  [key: string]: string | number | boolean | Record<string, unknown> | undefined;
 }
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {

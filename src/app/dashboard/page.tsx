@@ -61,7 +61,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Home</h1>
           <p className="text-muted-foreground mt-2">
-            Here's what's happening with your academic work today.
+            Here&apos;s what&apos;s happening with your academic work today.
           </p>
 
           {/* Action Buttons */}

@@ -41,11 +41,10 @@ const navItems: NavItem[] = [
 ];
 
 interface MainLayoutProps {
-  initialScreen?: ScreenType;
   children?: React.ReactNode;
 }
 
-export function MainLayout({ children, initialScreen }: MainLayoutProps) {
+export function MainLayout({ children }: MainLayoutProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
