@@ -8,8 +8,8 @@ export interface NavItem {
   id: string;
   /** Display text for the navigation item */
   title: string;
-  /** URL path for the navigation item */
-  href: string;
+  /** URL path for the navigation item (optional) */
+  href?: string; // Made optional
   /** Optional icon component */
   icon?: LucideIcon | React.ComponentType<{ className?: string }>;
   /** Child navigation items (for nested menus) */
@@ -24,4 +24,14 @@ export interface NavItem {
   description?: string;
   /** Optional roles that can access this item */
   roles?: string[];
+  /** Optional variant for styling */
+  variant?: 'default' | 'ghost'; // Added from the other file
 }
+
+export type ScreenType =
+  | 'dashboard'
+  | 'analysis'
+  | 'documents'
+  | 'projects'
+  | 'upload'
+  | 'settings';

@@ -6,7 +6,7 @@ import { FileText, Home, Upload, Settings, BarChart, Folder, Loader2 } from 'luc
 
 import { Sidebar } from './sidebar';
 import { Header } from './header';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from '@/components/ui';
 import { useUIStore } from '@/store/ui-store';
 import { useUserStore } from '@/store/user-store';
 import { useSession } from 'next-auth/react';
