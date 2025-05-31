@@ -8,6 +8,15 @@ AcademiaLens is an AI-powered web application designed to help researchers manag
 
 ---
 
+## 🟢 Sprint 4.6 Release Note
+
+- **Project Detail Page Overhaul:** Completely redesigned project view with tabbed interface
+- **Enhanced Document Management:** Improved document browsing with folder organization and search
+- **Team Collaboration:** Added team member management and activity tracking
+- **Performance Optimizations:** Reduced bundle size by removing unused dependencies
+- **Type Safety:** Improved TypeScript types and fixed type-related issues
+- **UI/UX Refinements:** Polished UI components and interactions
+
 ## 🟢 Sprint 4.5 Release Note
 
 - **Complete Dashboard Redesign:** Actionable, insight-driven workspace hub for scholars

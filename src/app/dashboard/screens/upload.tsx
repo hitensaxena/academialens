@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Upload, Loader2, X, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { FileText, Upload, Loader2, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -12,7 +13,17 @@ interface Document {
   fileUrl: string;
   fileType: string;
   fileSize: number;
+  status: 'processing' | 'completed' | 'failed';
+  processedAt?: string;
+  error?: string;
+  chunks?: {
+    id: string;
+    content: string;
+    pageNumber?: number;
+    metadata: Record<string, any>;
+  }[];
   createdAt: string;
+  updatedAt: string;
 }
 
 interface FetchError extends Error {
@@ -31,12 +42,111 @@ const formatFileSize = (bytes: number): string => {
 };
 
 export default function UploadScreen() {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
+  const [processing, setProcessing] = useState<boolean>(false);
+  const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({});
+
+  // Fetch documents on component mount
+  const fetchDocuments = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/documents');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch documents: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setDocuments(data);
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+      setError('Failed to load documents. Please try refreshing the page.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initialize fetch on mount
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  // Poll document processing status
+  const pollDocumentStatus = useCallback(
+    async (docId: string) => {
+      const poll = async () => {
+        try {
+          const response = await fetch(`/api/documents/${docId}/status`);
+          if (!response.ok) throw new Error('Failed to fetch status');
+
+          const data = await response.json();
+
+          // Update status in UI
+          if (data.status === 'processing') {
+            setProcessingStatus(prev => ({
+              ...prev,
+              [docId]: data.message || 'Processing...',
+            }));
+
+            // Continue polling if still processing
+            if (data.estimatedTimeRemaining) {
+              setTimeout(poll, 5000);
+            }
+          } else {
+            // Processing complete or failed
+            setDocuments(prev => prev.map(doc => (doc.id === docId ? { ...doc, ...data } : doc)));
+
+            if (data.status === 'completed') {
+              setProcessingStatus(prev => ({
+                ...prev,
+                [docId]: 'Processing complete',
+              }));
+              setSuccess(`Document "${data.title}" processed successfully`);
+            } else if (data.status === 'failed') {
+              setProcessingStatus(prev => ({
+                ...prev,
+                [docId]: `Failed: ${data.error || 'Unknown error'}`,
+              }));
+              setError(`Failed to process document: ${data.error || 'Unknown error'}`);
+            }
+
+            // Refresh documents list
+            await fetchDocuments();
+          }
+        } catch (error) {
+          console.error('Error polling document status:', error);
+          // Don't show error to user, just stop polling
+        }
+      };
+
+      // Start polling
+      poll();
+    },
+    [fetchDocuments],
+  );
+
+  // Handle upload errors
+  const handleUploadError = useCallback((error: unknown, defaultMessage: string) => {
+    console.error('Upload error:', error);
+    setUploading(false);
+    setProcessing(false);
+
+    const errorMessage = error instanceof Error ? error.message : defaultMessage;
+    setError(errorMessage);
+
+    // Update document status if we have a temp ID
+    setDocuments(prev =>
+      prev.map(doc =>
+        doc.id.startsWith('temp-') ? { ...doc, status: 'failed', error: errorMessage } : doc,
+      ),
+    );
+  }, []);
 
   // Handle file drop
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -72,29 +182,6 @@ export default function UploadScreen() {
     }
   }, [fileRejections]);
 
-  // Fetch documents on component mount
-  const fetchDocuments = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/documents');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch documents: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setDocuments(data);
-    } catch (err) {
-      console.error('Error fetching documents:', err);
-      setError('Failed to load documents. Please try refreshing the page.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
-
   // Handle file upload
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,234 +192,230 @@ export default function UploadScreen() {
 
     const formData = new FormData();
     formData.append('file', file);
+    setUploading(true);
+    setProcessing(true);
+    setProgress(0);
+    setError(null);
+    setSuccess(null);
+
+    // Create a document entry immediately to show in the UI
+    const tempDocId = `temp-${Date.now()}`;
+    const newDoc: Document = {
+      id: tempDocId,
+      title: file.name,
+      fileUrl: '',
+      fileType: file.type,
+      fileSize: file.size,
+      status: 'processing',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setDocuments(prev => [newDoc, ...prev]);
+    setProcessingStatus(prev => ({
+      ...prev,
+      [tempDocId]: 'Uploading file...',
+    }));
 
     try {
-      setUploading(true);
-      setError(null);
-      setSuccess(null);
+      // Create a new XMLHttpRequest for better progress tracking
+      const xhr = new XMLHttpRequest();
 
-      console.log('Starting file upload...', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-      });
+      // Set up progress tracking
+      xhr.upload.onprogress = event => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setProgress(percentComplete);
+          setProcessingStatus(prev => ({
+            ...prev,
+            [tempDocId]: `Uploading: ${percentComplete}%`,
+          }));
+        }
+      };
 
-      // Add a timeout to the fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
+      // Set up the request
+      xhr.open('POST', '/api/upload', true);
+      xhr.setRequestHeader('Accept', 'application/json');
 
-      try {
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal,
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        clearTimeout(timeoutId);
-
-        console.log('Upload response status:', response.status, response.statusText);
-
-        let responseData;
+      // Handle response
+      xhr.onload = async () => {
         try {
-          const responseText = await response.text();
-          console.log('Raw response:', responseText);
-          responseData = responseText ? JSON.parse(responseText) : {};
-        } catch (jsonError) {
-          console.error('Error parsing JSON response:', jsonError);
-          throw new Error('Invalid response from server - not valid JSON');
-        }
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const responseData = JSON.parse(xhr.responseText);
+            console.log('Upload successful:', responseData);
 
-        if (!response.ok) {
-          console.error('Upload failed:', {
-            status: response.status,
-            statusText: response.statusText,
-            response: responseData,
-            headers: Object.fromEntries(response.headers.entries()),
-          });
+            // Update the document with server response
+            setDocuments(prev =>
+              prev.map(doc =>
+                doc.id === tempDocId ? { ...responseData, status: 'processing' as const } : doc,
+              ),
+            );
 
-          // Handle specific error statuses
-          if (response.status === 401) {
-            throw new Error('Please sign in to upload files');
-          } else if (response.status === 413) {
-            throw new Error('File is too large. Maximum size is 20MB.');
-          } else if (response.status >= 500) {
-            throw new Error('Server error. Please try again later.');
+            setProcessingStatus(prev => ({
+              ...prev,
+              [tempDocId]: 'Processing document...',
+            }));
+
+            // Start polling for processing status
+            pollDocumentStatus(responseData.id);
+          } else {
+            // Try to parse error response
+            let errorMessage = xhr.statusText;
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              errorMessage = errorData.error || errorData.message || errorMessage;
+              if (errorData.details) {
+                errorMessage += `: ${errorData.details}`;
+              }
+            } catch (e) {
+              // If we can't parse the error, use the status text
+              console.error('Error parsing error response:', e);
+            }
+
+            handleUploadError(
+              new Error(errorMessage),
+              `Upload failed with status ${xhr.status}: ${errorMessage}`,
+            );
           }
-
-          throw new Error(
-            responseData.error ||
-              responseData.message ||
-              `Upload failed with status ${response.status}: ${response.statusText}`,
+        } catch (error) {
+          console.error('Error in upload response handler:', error);
+          handleUploadError(
+            error,
+            'Failed to process server response. Please check the console for details.',
           );
         }
+      };
 
-        console.log('Upload successful:', responseData);
-        setSuccess('File uploaded successfully!');
-        setFile(null);
+      // Handle network errors
+      xhr.onerror = () => {
+        handleUploadError(
+          new Error('Network error'),
+          'Failed to connect to server. Please check your internet connection and try again.',
+        );
+      };
 
-        // Refresh the documents list
-        await fetchDocuments();
-      } catch (error) {
-        const fetchError = error as FetchError;
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        xhr.abort();
+        handleUploadError(new Error('Request timeout'), 'Upload timed out');
+      }, 300000); // 5 minute timeout
 
-        // Log error details safely
-        const errorDetails = {
-          name: fetchError.name || 'UnknownError',
-          message: fetchError.message || 'No error message',
-          stack: 'stack' in fetchError ? fetchError.stack : 'No stack trace',
-          code: 'code' in fetchError ? fetchError.code : 'No error code',
-          type: typeof fetchError,
-        };
-
-        console.error('Fetch error details:', errorDetails);
-
-        // Handle specific error types
-        if (fetchError.name === 'AbortError') {
-          throw new Error('Request timed out. The server took too long to respond.');
-        }
-
-        if (fetchError.message && fetchError.message.includes('Failed to fetch')) {
-          throw new Error(
-            'Failed to connect to the server. Please check your internet connection.',
-          );
-        }
-
-        // Re-throw the original error if it's already an Error instance
-        if (error instanceof Error) {
-          throw error;
-        }
-
-        // If we get here, it's an unknown error type
-        throw new Error('An unknown error occurred during upload');
-      }
-    } catch (err) {
-      console.error('Upload error:', {
-        error: err,
-        name: err instanceof Error ? err.name : 'Unknown',
-        message: err instanceof Error ? err.message : 'No message',
-        stack: err instanceof Error ? err.stack : 'No stack trace',
-      });
-
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : typeof err === 'string'
-            ? err
-            : 'An unknown error occurred during upload';
-
-      setError(`Upload failed: ${errorMessage}`);
+      // Send the request
+      xhr.send(formData);
+    } catch (error) {
+      handleUploadError(error, 'An error occurred during upload');
     } finally {
       setUploading(false);
+      setProcessing(false);
     }
   };
 
-  // Handle document deletion
-  const handleDeleteDocument = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
+  // Render document status
+  const renderDocumentStatus = (doc: Document) => {
+    const status = processingStatus[doc.id] || '';
+    const isProcessing = doc.status === 'processing';
+    const isCompleted = doc.status === 'completed';
+    const isFailed = doc.status === 'failed';
 
-    try {
-      const response = await fetch(`/api/documents/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete document');
-      }
-
-      setSuccess('Document deleted successfully');
-      await fetchDocuments();
-    } catch (err) {
-      console.error('Delete error:', err);
-      setError('Failed to delete document');
-    }
-  };
-
-  // Handle document download
-  const handleDownloadDocument = (url: string, name: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    return (
+      <div className="mt-1 text-sm">
+        {isProcessing && (
+          <div className="flex items-center text-yellow-600">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <span>{status || 'Processing...'}</span>
+          </div>
+        )}
+        {isCompleted && (
+          <div className="flex items-center text-green-600">
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            <span>Ready for analysis</span>
+          </div>
+        )}
+        {isFailed && (
+          <div className="flex items-center text-red-600">
+            <AlertCircle className="mr-2 h-4 w-4" />
+            <span>{doc.error || 'Processing failed'}</span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="container mx-auto p-6">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Upload Document</CardTitle>
-          <CardDescription>Upload a PDF, Word, or Text document to get started</CardDescription>
+          <CardDescription>Upload a PDF, DOCX, or text file to process and analyze</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit}>
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
               }`}
             >
               <input {...getInputProps()} />
               <div className="flex flex-col items-center justify-center space-y-2">
-                <Upload className="h-8 w-8 text-gray-400" />
-                <p className="text-sm text-gray-600">
+                <Upload className="h-10 w-10 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
                   {isDragActive
                     ? 'Drop the file here'
-                    : 'Drag and drop a file here, or click to select'}
+                    : 'Drag & drop a file here, or click to select'}
                 </p>
-                <p className="text-xs text-gray-500">
-                  Supported formats: PDF, DOCX, TXT (max 20MB)
-                </p>
+                <p className="text-xs text-muted-foreground">PDF, DOCX, or TXT (max 20MB)</p>
               </div>
             </div>
 
             {file && (
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+              <div className="mt-4 p-4 bg-muted/50 rounded-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                    </div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setFile(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <button
-                  type="button"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setFile(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {uploading && (
+                  <div className="mt-2">
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground text-center">
+                      Uploading... {progress}%
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
-            {error && (
-              <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-md">
-                <AlertCircle className="h-4 w-4" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>{success}</span>
-              </div>
-            )}
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={!file || uploading} className="min-w-[120px]">
-                {uploading ? (
+            <div className="mt-6 flex justify-end">
+              <Button
+                type="submit"
+                disabled={!file || uploading || processing}
+                className="w-full sm:w-auto"
+              >
+                {uploading || processing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
+                    {uploading ? 'Uploading...' : 'Processing...'}
                   </>
                 ) : (
                   'Upload Document'
@@ -340,66 +423,64 @@ export default function UploadScreen() {
               </Button>
             </div>
           </form>
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md">
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-md">
+              <p className="text-sm">{success}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Your Documents</CardTitle>
-              <CardDescription>View and manage your uploaded documents</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={fetchDocuments} disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              <span className="ml-2">Refresh</span>
-            </Button>
-          </div>
+          <CardTitle>Your Documents</CardTitle>
+          <CardDescription>View and manage your uploaded documents</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : documents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No documents uploaded yet.</div>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No documents uploaded yet</p>
+            </div>
           ) : (
-            <div className="border rounded-md divide-y">
+            <div className="space-y-4">
               {documents.map(doc => (
                 <div
                   key={doc.id}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center space-x-4">
-                    <FileText className="h-5 w-5 text-gray-400" />
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="font-medium">{doc.title}</p>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-medium">{doc.title}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {formatFileSize(doc.fileSize)} •{' '}
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </p>
+                      {renderDocumentStatus(doc)}
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadDocument(doc.fileUrl, doc.title)}
-                    >
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteDocument(doc.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      Delete
-                    </Button>
+                    {doc.status === 'completed' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/dashboard/documents/${doc.id}`)}
+                      >
+                        View
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

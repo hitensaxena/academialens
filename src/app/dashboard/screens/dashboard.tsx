@@ -1,5 +1,4 @@
 'use client';
-'use client';
 
 import React from 'react';
 import PasteQuickTextButton from './PasteQuickTextButton';
@@ -54,7 +53,7 @@ export function DashboardScreen() {
   return (
     <div className="space-y-6">
       {/* Hero / Snapshot Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-background rounded-xl p-6 border shadow-sm transition-shadow hover:shadow-md focus:shadow-md">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-card rounded-xl p-6 border shadow-sm transition-shadow hover:shadow-md focus:shadow-md">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">

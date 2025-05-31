@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Search, Menu, Bell } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -39,29 +40,20 @@ export function Header({ onMenuClick, user, className }: HeaderProps) {
       )}
     >
       <div className="flex w-full items-center justify-between px-4 sm:px-6">
-        {/* Left: App Name & Menu */}
-        <div className="flex items-center space-x-4 flex-1 min-w-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 p-0 md:hidden"
-            onClick={onMenuClick}
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle sidebar</span>
-          </Button>
-          <span className="text-xl font-bold tracking-tight whitespace-nowrap">AcademiaLens</span>
-        </div>
+        {/* Left: Menu Button */}
+        <Button variant="ghost" size="icon" className="h-9 w-9 p-0 md:hidden" onClick={onMenuClick}>
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
 
-        {/* Center: Search Bar */}
-        <div className="flex-1 flex justify-center">
+        {/* Spacer to push content to center */}
+        <div className="flex-1 md:flex-none" />
+
+        {/* Center: Search */}
+        <div className="hidden md:flex flex-1 max-w-xl px-4">
           <div className="relative w-full max-w-lg">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-            />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input type="search" placeholder="Search..." className="w-full pl-9" />
           </div>
         </div>
 

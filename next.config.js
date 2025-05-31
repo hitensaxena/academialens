@@ -10,9 +10,21 @@ const nextConfig = {
     };
     return config;
   },
-  // Optional: Configure images if you're using Next.js Image component
+  // Configure images for Next.js Image component
   images: {
-    domains: ['localhost'], // Add your image domains here
+    domains: ['localhost', 'lh3.googleusercontent.com', 'ui-avatars.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+        pathname: '/**',
+      },
+    ],
   },
 };
 

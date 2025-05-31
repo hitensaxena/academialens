@@ -42,9 +42,10 @@ const navItems: NavItem[] = [
 
 interface MainLayoutProps {
   initialScreen?: ScreenType;
+  children?: React.ReactNode;
 }
 
-export function MainLayout({}: MainLayoutProps) {
+export function MainLayout({ children, initialScreen }: MainLayoutProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -126,7 +127,7 @@ export function MainLayout({}: MainLayoutProps) {
         />
         {/* Main content */}
         <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
-          {React.createElement(screenComponents[activeScreen] || (() => null))}
+          {children || React.createElement(screenComponents[activeScreen] || (() => null))}
         </main>
       </div>
       {/* Toast notifications */}

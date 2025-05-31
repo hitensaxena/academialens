@@ -29,6 +29,14 @@ enum FileType {
   VIDEO
 }
 
+enum DocumentStatus {
+  UPLOADING
+  PROCESSING
+  COMPLETED
+  FAILED
+  QUEUED
+}
+
 enum ProjectRole {
   OWNER
   EDITOR
@@ -173,7 +181,8 @@ model Document {
   metadata        Json?     // Extracted metadata (authors, publication date, etc.)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  isProcessed     Boolean   @default(false)
+  isProcessed     Boolean         @default(false)
+  status          DocumentStatus  @default(UPLOADING)
   processingError String?
 
   // Relations

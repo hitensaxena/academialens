@@ -1,266 +1,210 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  FileText,
+  MessageSquare,
+  Upload as UploadIcon,
+  Plus,
+  Search,
+  FileSearch,
+  FileQuestion,
+  FileCode,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
-  console.log('Rendering DashboardPage');
-  const router = useRouter();
+  // Sample recent projects data
+  const recentProjects = [
+    {
+      id: 1,
+      title: 'Research Paper on AI Ethics',
+      type: 'paper',
+      lastUpdated: '2 hours ago',
+      collaborators: 3,
+      status: 'In Progress',
+    },
+    {
+      id: 2,
+      title: 'Literature Review - Machine Learning',
+      type: 'review',
+      lastUpdated: '1 day ago',
+      collaborators: 2,
+      status: 'Draft',
+    },
+    {
+      id: 3,
+      title: 'Thesis Chapter 1 - Introduction',
+      type: 'thesis',
+      lastUpdated: '3 days ago',
+      collaborators: 1,
+      status: 'Completed',
+    },
+  ];
 
-  // This page is rendered inside the MainLayout component
-  // which is provided by the dashboard layout.tsx
-
-  // Ensure we're at the /dashboard URL
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (path.endsWith('/dashboard') || path === '/') {
-      // We're at the correct URL, no need to redirect
-      return;
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case 'paper':
+        return <FileText className="h-5 w-5 text-blue-500" />;
+      case 'review':
+        return <FileSearch className="h-5 w-5 text-green-500" />;
+      case 'thesis':
+        return <FileCode className="h-5 w-5 text-purple-500" />;
+      default:
+        return <FileQuestion className="h-5 w-5 text-gray-500" />;
     }
-
-    // If we're at /dashboard/something, update the URL to /dashboard
-    if (path.startsWith('/dashboard/')) {
-      router.replace('/dashboard');
-    }
-  }, [router]);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening with your research today.
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Home</h1>
+          <p className="text-muted-foreground mt-2">
+            Here's what's happening with your academic work today.
+          </p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
-          </CardContent>
-        </Card>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-4 mt-6">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <UploadIcon className="h-4 w-4" />
+              Upload Files
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <Search className="h-4 w-4" />
+              Search Documents
+            </Button>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">45.2 MB</div>
-            <p className="text-xs text-muted-foreground">+4.2 MB from last month</p>
-          </CardContent>
-        </Card>
+        {/* Recent Projects Section */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">Recent Projects</h2>
+            <Link href="/dashboard/projects" className="text-sm text-primary hover:underline">
+              View all projects
+            </Link>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <rect width="20" height="14" x="2" y="5" rx="2" />
-              <path d="M2 10h20" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">+1 from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">+0 from last month</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Recent Documents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="rounded-md bg-primary/10 p-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-5 w-5 text-primary"
-                      >
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
-                    </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {recentProjects.map(project => (
+              <div
+                key={project.id}
+                className="bg-card rounded-lg border p-6 hover:border-primary transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg bg-primary/10">{getFileIcon(project.type)}</div>
                     <div>
-                      <p className="text-sm font-medium leading-none">Document {i}.pdf</p>
+                      <h3 className="font-medium">{project.title}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {Math.floor(Math.random() * 5) + 1} days ago
+                        Last updated {project.lastUpdated}
                       </p>
                     </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {(Math.random() * 2 + 1).toFixed(1)} MB
-                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      project.status === 'Completed'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                        : project.status === 'In Progress'
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                    }`}
+                  >
+                    {project.status}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer">
-                <div className="flex items-center space-x-4">
-                  <div className="rounded-md bg-primary/10 p-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5 text-primary"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" x2="12" y1="3" y2="15" />
-                    </svg>
+                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                  <div className="flex -space-x-2">
+                    {[...Array(project.collaborators)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium"
+                      >
+                        {i + 1}
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">Upload New Document</p>
-                    <p className="text-sm text-muted-foreground">PDF, DOCX, or TXT files</p>
-                  </div>
+                  <Button variant="ghost" size="sm" className="text-primary">
+                    Open
+                  </Button>
                 </div>
               </div>
-              <div className="rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer">
-                <div className="flex items-center space-x-4">
-                  <div className="rounded-md bg-primary/10 p-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5 text-primary"
-                    >
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">Analyze Document</p>
-                    <p className="text-sm text-muted-foreground">Extract key insights</p>
-                  </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link
+              href="/dashboard/documents/new"
+              className="bg-card p-6 rounded-lg border border-border hover:border-primary transition-colors duration-200"
+            >
+              <div className="flex items-center">
+                <div className="bg-primary/10 p-3 rounded-lg mr-4">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">New Document</h3>
+                  <p className="text-sm text-muted-foreground">Start from scratch</p>
                 </div>
               </div>
-              <div className="rounded-lg border p-4 hover:bg-accent/50 transition-colors cursor-pointer">
-                <div className="flex items-center space-x-4">
-                  <div className="rounded-md bg-primary/10 p-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5 text-primary"
-                    >
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                      <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none">View All Documents</p>
-                    <p className="text-sm text-muted-foreground">Browse your library</p>
-                  </div>
+            </Link>
+
+            <Link
+              href="/dashboard/upload"
+              className="bg-card p-6 rounded-lg border border-border hover:border-primary transition-colors duration-200"
+            >
+              <div className="flex items-center">
+                <div className="bg-primary/10 p-3 rounded-lg mr-4">
+                  <UploadIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Upload Files</h3>
+                  <p className="text-sm text-muted-foreground">Add PDFs, Word docs, and more</p>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </Link>
+
+            <Link
+              href="/dashboard/chat"
+              className="bg-card p-6 rounded-lg border border-border hover:border-primary transition-colors duration-200"
+            >
+              <div className="flex items-center">
+                <div className="bg-primary/10 p-3 rounded-lg mr-4">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Start Chat</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Ask questions about your documents
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href="/dashboard/analytics"
+              className="bg-card p-6 rounded-lg border border-border hover:border-primary transition-colors duration-200"
+            >
+              <div className="flex items-center">
+                <div className="bg-primary/10 p-3 rounded-lg mr-4">
+                  <FileSearch className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Research Hub</h3>
+                  <p className="text-sm text-muted-foreground">Find related papers</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
