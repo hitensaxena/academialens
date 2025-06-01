@@ -29,20 +29,25 @@ AcademiaLens is an AI-powered web application designed to help researchers manag
 
 ## 🚀 Latest Updates
 
+- **Document Processing Improvements (June 2025):**
+  - Enhanced `DocumentRepository` with robust TypeScript types and error handling
+  - Fixed TypeScript errors related to Prisma Document model and FileType enum
+  - Improved file type detection with proper MIME type and extension mapping
+  - Added comprehensive error handling and logging throughout the document processing pipeline
+  - Ensured type safety in all document-related operations
+
 - **Major Layout Refactor (May 2025):**
+  - Header is now always full-width and fixed at the top
+  - Improved sidebar navigation and content layout
+  - Enhanced mobile responsiveness
+  - Streamlined UI components and interactions
 
-  - Header is now always full-width and fixed at the top, with the "AcademiaLens" app name on the left and a centered search bar.
-  - Sidebar now appears below the header (not overlapping), providing clear separation and improved navigation.
-  - Main content area is horizontally aligned with the sidebar, ensuring a clean and organized layout.
-  - Fixed an issue where dashboard content was duplicated in the main container.
-  - All code is linted and up-to-date with the latest UI/UX best practices.
-
-- **Complete Dashboard Navigation** - Seamless routing between dashboard sections
-- **Responsive Sidebar** - Toggle sidebar for mobile and desktop
-- **User Profile Integration** - Session-aware user navigation
-- **Document Management** - Upload, view, and delete documents with feedback
-- **Cloud Storage** - Cloudinary integration for uploads
-- **AI Analysis** - Summarize and extract insights from documents
+- **Core Features:**
+  - Complete Dashboard Navigation with seamless routing
+  - Responsive Sidebar with collapsible menu
+  - User Profile Integration with session management
+  - Document Management with Cloudinary integration
+  - AI-powered document analysis and insight extraction
 
 ---
 
